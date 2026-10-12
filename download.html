@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download NEMESIS - Platform Selection</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;700&display=swap');
+
+        :root {
+            --win-color: #00e5ff;
+            --lin-color: #ffea00;
+            --bg-color: #030508;
+            --card-bg: #0b111e; /* Warna solid gelap hemat resource tanpa blur */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: #ffffff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Latar belakang bintang statis (tanpa animasi infinite loop agar tidak membebani GPU) */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: 
+                radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 40px 70px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 90px 40px, rgba(255,255,255,0.7), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.5), rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 250px 250px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        /* UI Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 40px;
+            width: 100%;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: #8892b0;
+            margin-top: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .nav-btn {
+            background: #111726;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 12px 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-btn:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .title-section h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .title-section p {
+            font-size: 1.2rem;
+            color: #a8b2d1;
+        }
+
+        .cards-container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* Flat Clean Cards (Tanpa filter blur & tanpa animasi floating) */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            text-decoration: none;
+            color: #fff;
+            transform: none !important;
+            transition: border-color 0.2s ease;
+        }
+
+        .card:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .card h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .card p {
+            font-size: 1.1rem;
+            color: #8892b0;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .download-btn {
+            margin-top: auto;
+            padding: 12px 30px;
+            border: 2px solid;
+            border-radius: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: transparent;
+        }
+
+        /* Varian Windows */
+        .card-win .card-icon svg { fill: var(--win-color); }
+        .card-win .download-btn {
+            color: var(--win-color);
+            border-color: var(--win-color);
+        }
+        .card-win:hover {
+            border-color: var(--win-color);
+        }
+
+        /* Varian Linux */
+        .card-lin .card-icon svg { fill: var(--lin-color); }
+        .card-lin .download-btn {
+            color: var(--lin-color);
+            border-color: var(--lin-color);
+        }
+        .card-lin:hover {
+            border-color: var(--lin-color);
+        }
+
+        @media (max-width: 768px) {
+            header { flex-direction: column; align-items: center; gap: 20px; text-align: center; }
+            .cards-container { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+
+    <header>
+        <div>
+            <div class="logo">NEMESIS</div>
+            <div class="tagline">MULTI-VENDOR AI DIAGNOSTIC</div>
+        </div>
+        <a href="index.html" class="nav-btn">← Kembali</a>
+    </header>
+
+    <main>
+        <div class="title-section">
+            <h1>PILIH PLATFORM OS ANDA</h1>
+            <p>Unduh versi standalone yang sesuai dengan sistem operasi Anda.</p>
+        </div>
+
+        <div class="cards-container">
+            <!-- Kartu Windows -->
+            <a href="nemesis-windows.zip" class="card card-win" download>
+                <div class="card-icon">
+                    <svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0,12.402l35.687-4.86l0,34.423l-35.687,0L0,12.402z M39.467,6.866L87.892,0l0,41.966l-48.425,0L39.467,6.866z M39.467,46.034l48.425,0l0,41.966l-48.425-6.866L39.467,46.034z M0,46.034l35.687,0l0,34.423l-35.687-4.86L0,46.034z"/>
+                    </svg>
+                </div>
+                <h2>WINDOWS</h2>
+                <p>Termasuk file eksekusi (.exe) yang dapat langsung dijalankan pada Windows 10 & 11.</p>
+                <div class="download-btn">Unduh .ZIP</div>
+            </a>
+
+            <!-- Kartu Linux (Ikon Tux) -->
+<!-- Kartu Linux -->
+            <a href="Nemesis-AI.zip" class="card card-lin" download>
+                <div class="card-icon">
+                    <!-- Arahkan src ke file gambar Anda -->
+                    <img src="assets/linux.png" alt="Linux Icon" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+                <h2>LINUX</h2>
+                <p>Biner standalone (chmod +x) untuk berbagai distro Linux berbasis Debian / RHEL.</p>
+                <div class="download-btn">Unduh .ZIP</div>
+            </a>
+        </div>
+    </main>
+</body>
+</html>

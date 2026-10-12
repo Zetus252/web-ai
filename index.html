@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEMESIS - Futuristic 3D Network</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;700&display=swap');
+
+        :root {
+            --cisco: #00e5ff;
+            --mikrotik: #ffea00;
+            --juniper: #d500f9;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; } /* Diperbaiki dari - menjadi * */
+
+        body, html {
+            width: 100%;
+            background-color: #030508;
+            color: #ffffff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .scroll-container { height: 400vh; position: relative; z-index: 10; }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+        }
+
+        header { display: flex; justify-content: space-between; align-items: flex-start; }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+
+        .tagline { font-size: 1.2rem; color: #8892b0; margin-top: 10px; letter-spacing: 2px; }
+
+        .nav-btn {
+            pointer-events: auto;
+            background: #1d1d1f; /* Hitam solid */
+            border: 1px solid #1d1d1f; /* Tepi hitam solid */
+            backdrop-filter: none !important; /* Menghilangkan blur */
+            -webkit-backdrop-filter: none !important;
+            color: #ffffff;
+            padding: 12px 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .nav-btn:hover {
+            background: #424245; /* Berubah abu-abu gelap saat dihover */
+            border-color: #424245 !important; /* Garis tepi mengikuti warna dasar, tidak bersinar */
+            box-shadow: none !important; /* Memastikan tidak ada glow/cahaya neon */
+        }
+
+        .scroll-indicator { align-self: center; text-align: center; opacity: 0.7; animation: pulse 2s infinite; }
+        .scroll-indicator p { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 3px; margin-bottom: 10px; }
+        
+        .mouse { width: 30px; height: 50px; border: 2px solid white; border-radius: 15px; margin: 0 auto; position: relative; }
+        .wheel { width: 4px; height: 8px; background: white; border-radius: 2px; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); animation: scrollWheel 1.5s infinite; }
+
+        .content-section {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 10vw;
+            pointer-events: none;
+        }
+
+        .content-box {
+            background: rgba(10, 15, 25, 0.6);
+            backdrop-filter: blur(12px);
+            border-left: 4px solid white;
+            padding: 40px;
+            border-radius: 0 16px 16px 0;
+            max-width: 500px;
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .content-box.visible { opacity: 1; transform: translateX(0); }
+        .content-box h2 { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; margin-bottom: 15px; text-transform: uppercase; }
+        .content-box p { font-size: 1.1rem; line-height: 1.6; color: #a8b2d1; }
+
+        #sec-cisco { top: 100vh; }
+        #sec-cisco .content-box { border-left-color: var(--cisco); }
+        #sec-cisco h2 { color: var(--cisco); text-shadow: 0 0 15px rgba(0, 229, 255, 0.5); }
+
+        #sec-mikrotik { top: 200vh; }
+        #sec-mikrotik .content-box { border-left-color: var(--mikrotik); }
+        #sec-mikrotik h2 { color: var(--mikrotik); text-shadow: 0 0 15px rgba(255, 234, 0, 0.5); }
+
+        #sec-juniper { top: 300vh; }
+        #sec-juniper .content-box { border-left-color: var(--juniper); }
+        #sec-juniper h2 { color: var(--juniper); text-shadow: 0 0 15px rgba(213, 0, 249, 0.5); }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes scrollWheel { 0% { top: 10px; opacity: 1; } 100% { top: 25px; opacity: 0; } }
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 768px) {
+            .ui-layer {
+                padding: 20px;
+            }
+            
+            header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .logo { font-size: 2rem; }
+            .tagline { font-size: 0.9rem; }
+
+            .content-section {
+                padding-left: 5vw;
+                padding-right: 5vw;
+                justify-content: center;
+            }
+
+            .content-box {
+                max-width: 100%;
+                padding: 25px;
+                transform: translateY(50px);
+            }
+
+            .content-box.visible {
+                transform: translateY(0);
+            }
+
+            .content-box h2 { font-size: 1.8rem; }
+            .content-box p { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="webgl-canvas"></canvas>
+
+    <div class="ui-layer">
+        <header>
+            <div>
+                <div class="logo">NEMESIS</div>
+                <div class="tagline">MULTI-VENDOR AI DIAGNOSTIC</div>
+            </div>
+            <button class="nav-btn" onclick="window.location.href='/download.html'">Unduh Tools (.zip)</button>
+        </header>
+    </div>
+
+    <div class="scroll-container">
+        <div class="content-section" id="sec-cisco">
+            <div class="content-box">
+                <h2>Cisco IOS</h2>
+                <p>Integrasi mendalam dengan arsitektur Cisco. Membaca routing table, ARP, dan mendeteksi anomali pada Layer 2/Layer 3 secara real-time menggunakan engine AI.</p>
+            </div>
+        </div>
+        <div class="content-section" id="sec-mikrotik">
+            <div class="content-box">
+                <h2>MikroTik</h2>
+                <p>Remote Winbox bergaya terminal. Menganalisis log firewall, NAT, dan interface RouterOS secara instan, mengubah data mentah menjadi solusi CLI yang bisa langsung di-copy.</p>
+            </div>
+        </div>
+        <div class="content-section" id="sec-juniper">
+            <div class="content-box">
+                <h2>Juniper JunOS</h2>
+                <p>Dukungan penuh untuk hierarki konfigurasi Juniper. Eksekusi pengecekan keamanan zona dan status interface dengan respons PTY native yang super cepat.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        
+        // Kabut putih cerah Apple
+        scene.fog = new THREE.FogExp2(0xf5f5f7, 0.04);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Partikel (Debu statis minimalis)
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 700;
+        const posArray = new Float32Array(particlesCount * 3); 
+        for(let i = 0; i < particlesCount * 3; i++) { 
+            posArray[i] = (Math.random() - 0.5) * 40;
+        }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.05, color: 0x86868b, transparent: true, opacity: 0.6 
+        });
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        // ==========================================
+        // 1. MEMBANGUN RAK SERVER (SERVER RACK 3D)
+        // ==========================================
+        const rackGroup = new THREE.Group();
+        scene.add(rackGroup);
+
+        // Material Rak (Premium Aluminum & Matte Black)
+        const rackMat = new THREE.MeshBasicMaterial({ color: 0xe5e5e7 }); // Tiang silver
+        const capMat = new THREE.MeshBasicMaterial({ color: 0x1d1d1f });  // Atap/Bawah hitam solid
+        const rackLineMat = new THREE.LineBasicMaterial({ color: 0x86868b, linewidth: 1 });
+
+        // Fungsi pembuat tiang rak
+        function createRackPost(x, z) {
+            const postGeo = new THREE.BoxGeometry(0.6, 16, 0.6);
+            const post = new THREE.Mesh(postGeo, rackMat);
+            const edges = new THREE.LineSegments(new THREE.EdgesGeometry(postGeo), rackLineMat);
+            post.add(edges);
+            post.position.set(x, 0, z);
+            rackGroup.add(post);
+        }
+
+        // Membuat 4 Sudut Tiang Rak
+        createRackPost(-5.3, 3);
+        createRackPost(5.3, 3);
+        createRackPost(-5.3, -3);
+        createRackPost(5.3, -3);
+
+        // Membuat Atap Rak
+        const capGeo = new THREE.BoxGeometry(11.2, 0.5, 6.6);
+        const topCap = new THREE.Mesh(capGeo, capMat);
+        topCap.position.set(0, 8, 0);
+        rackGroup.add(topCap);
+
+        // Membuat Alas Rak
+        const botCap = new THREE.Mesh(capGeo, capMat);
+        botCap.position.set(0, -8, 0);
+        rackGroup.add(botCap);
+
+        // ==========================================
+        // 2. MEMASUKKAN ROUTER KE DALAM RAK
+        // ==========================================
+        const textureLoader = new THREE.TextureLoader();
+
+        function createRouter(images, colorHex, yPos) {
+            const geometry = new THREE.BoxGeometry(10, 1.1, 6);
+            
+            const materials = [
+                new THREE.MeshBasicMaterial({ color: 0x222222 }), // Kanan
+                new THREE.MeshBasicMaterial({ color: 0x222222 }), // Kiri
+                new THREE.MeshBasicMaterial({ color: 0x222222 }), // Atas
+                new THREE.MeshBasicMaterial({ color: 0x222222 }), // Bawah
+                new THREE.MeshBasicMaterial({ color: 0x222222 }), // Depan
+                new THREE.MeshBasicMaterial({ color: 0x222222 })  // Belakang
+            ];
+
+            const routerMesh = new THREE.Mesh(geometry, materials);
+            const sisiMap = { kanan: 0, kiri: 1, atas: 2, bawah: 3, depan: 4, belakang: 5 };
+
+            for (const [sisi, namaFile] of Object.entries(images)) {
+                if(namaFile) {
+                    textureLoader.load(
+                        namaFile,
+                        function(texture) {
+                            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                            texture.generateMipmaps = true;
+                            routerMesh.material[sisiMap[sisi]] = new THREE.MeshBasicMaterial({ map: texture });
+                            routerMesh.material.needsUpdate = true;
+                        }
+                    );
+                }
+            }
+
+            // Garis Tepi Elegan
+            const edges = new THREE.EdgesGeometry(geometry);
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x1d1d1f, linewidth: 2 });
+            const wireframe = new THREE.LineSegments(edges, lineMat);
+            routerMesh.add(wireframe);
+
+            // Posisi Z diatur ke 0 agar pas dengan rak
+            routerMesh.position.y = yPos;
+            routerMesh.position.z = 0; 
+            
+            // DIMASUKKAN KE DALAM RAK, BUKAN SCENE
+            rackGroup.add(routerMesh);
+        }
+
+        createRouter({
+            depan: "assets/cisco/cisco_depan.png", belakang: "assets/cisco/cisco_belakang.png",
+            atas: "assets/cisco/cisco_atas.png", bawah: "assets/cisco/cisco_bawah.png",
+            kiri: "assets/cisco/cisco_kiri.png", kanan: "assets/cisco/cisco_kanan.png"
+        }, "#0071e3", 5); // Cisco di Rak Atas
+
+        createRouter({
+            depan: "assets/mikrotik/mikrotik_depan.jpg", belakang: "assets/mikrotik/mikrotik_belakang.jpg",
+            atas: "assets/mikrotik/mikrotik_atas.jpg", bawah: "assets/mikrotik/mikrotik_bawah.jpg",
+            kiri: "assets/mikrotik/mikrotik_kiri.jpg", kanan: "assets/mikrotik/mikrotik_kanan.jpg"
+        }, "#f56300", 0); // MikroTik di Rak Tengah
+
+        createRouter({
+            depan: "assets/juniper/juniper_depan.jpg", belakang: "assets/juniper/juniper_belakang.jpg",
+            atas: "assets/juniper/juniper_atas.jpg", bawah: "assets/juniper/juniper_bawah.jpg",
+            kiri: "assets/juniper/juniper_kiri.jpg", kanan: "assets/juniper/juniper_kanan.jpg"
+        }, "#bf4800", -5); // Juniper di Rak Bawah
+
+        // ==========================================
+        // 3. ANIMASI ELEVATOR & SCROLLING FISIK
+        // ==========================================
+        let isMobile = window.innerWidth <= 768;
+
+        function updateCamera() {
+            isMobile = window.innerWidth <= 768;
+        }
+        updateCamera();
+        
+        camera.position.x = 0;
+
+        let scrollY = window.scrollY;
+        let currentScroll = 0;
+
+        window.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+            const sections = document.querySelectorAll('.content-box');
+            sections.forEach((sec, index) => {
+                const triggerPoint = (index + 1) * window.innerHeight * 0.7;
+                if(scrollY > triggerPoint) {
+                    sec.classList.add('visible');
+                } else {
+                    sec.classList.remove('visible');
+                }
+            });
+        });
+
+        function lerp(start, end, t) {
+            return start * (1 - t) + end * t;
+        }
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            currentScroll = lerp(currentScroll, scrollY, 0.05);
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            const scrollPercent = maxScroll > 0 ? currentScroll / maxScroll : 0;
+
+            particlesMesh.rotation.y = elapsedTime * 0.02;
+
+            // [KAMERA ELEVATOR] Turun menyusuri rak dari Y: 5 ke Y: -5
+            camera.position.y = lerp(5, -5, scrollPercent);
+            
+            // Pengaturan Jarak Kamera (Lebih mundur saat di HP)
+            camera.position.z = isMobile ? 18 : 11.5;
+
+            // [POSISI RAK] Geser ke kanan jika di PC agar tidak tertutup teks
+            rackGroup.position.x = isMobile ? 0 : 3.5;
+
+            // [ROTASI RAK] Rak akan menoleh secara elegan (Parallax 3D Mulus)
+            // Dimulai miring ke kiri sedikit, dan bergoyang sangat lambat saat scroll
+            rackGroup.rotation.y = -0.4 + (Math.sin(scrollPercent * Math.PI) * 0.15);
+            
+            // Efek mendongak/menunduk vertikal yang sangat tipis agar ruang 3D terasa
+            rackGroup.rotation.x = (scrollPercent - 0.5) * -0.05;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            updateCamera();
+        });
+    </script>
+</body>
+</html>
